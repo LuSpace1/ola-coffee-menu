@@ -1,0 +1,19 @@
+# Sistema Operativo
+.DS_Store
+Thumbs.db
+*.swp
+
+# Entorno (compartido entre backend y frontend)
+.env
+.env.local
+.env.*.local
+
+# Logs generales
+*.log
+
+# Archivos temporales
+*.tmp
+*.bak
+
+# Archivos de respaldo
+*~
