@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Loader2, List } from 'lucide-react';
-import Swal from 'sweetalert2';
-import * as API from './api';
+import React, { useState, useEffect, useMemo } from "react";
+import { Plus, Loader2, List } from "lucide-react";
+import Swal from "sweetalert2";
+import * as API from "./api";
 
-import Header from './components/Header';
-import ProductCard from './components/ProductCard';
-import ProductEditor from './components/ProductEditor';
-import LoginModal from './components/LoginModal';
+import Header from "./components/Header";
+import ProductCard from "./components/ProductCard";
+import ProductEditor from "./components/ProductEditor";
+import LoginModal from "./components/LoginModal";
 
 export default function App() {
   // State
@@ -22,8 +22,26 @@ export default function App() {
 
   // Computed
   const categories = useMemo(() => {
-    const uniqueCats = Array.from(new Set(items.map(i => i.category)));
-    return ["Todos", ...uniqueCats.sort()];
+    const rawCategories = items.map((i) => i.category);
+    const uniqueCats = Array.from(new Set(rawCategories));
+
+    const otherCats = uniqueCats
+      .filter(
+        (cat) =>
+          cat.toLowerCase() !== "special" && cat.toLowerCase() !== "specials",
+      )
+      .sort();
+
+    const hasSpecials = uniqueCats.some(
+      (cat) =>
+        cat.toLowerCase() === "special" || cat.toLowerCase() === "specials",
+    );
+
+    if (hasSpecials) {
+      return ["Todos", "Special", ...otherCats];
+    }
+
+    return ["Todos", ...otherCats];
   }, [items]);
 
   // Effects
@@ -35,7 +53,10 @@ export default function App() {
   const fetchItems = async () => {
     setLoading(true);
     try {
-      const safeCategory = categories.includes(activeCategory) ? activeCategory : "Todos";
+      // Validamos que la categoría activa exista, si no, volvemos a "Todos"
+      const safeCategory = categories.includes(activeCategory)
+        ? activeCategory
+        : "Todos";
       if (safeCategory !== activeCategory) setActiveCategory("Todos");
 
       const data = await API.getMenu(safeCategory, searchQuery);
@@ -48,25 +69,23 @@ export default function App() {
   };
 
   const handleLogoClick = () => {
-    setLogoClicks(prev => prev + 1);
-    
+    setLogoClicks((prev) => prev + 1);
     if (logoClicks + 1 >= 3) {
       if (isAdmin) {
         setIsAdmin(false);
         Swal.fire({
-          icon: 'info',
-          title: 'Modo Cliente',
+          icon: "info",
+          title: "Modo Cliente",
           toast: true,
-          position: 'top-end',
+          position: "top-end",
           showConfirmButton: false,
-          timer: 1500
+          timer: 1500,
         });
       } else {
         setShowLogin(true);
       }
       setLogoClicks(0);
     }
-    
     setTimeout(() => setLogoClicks(0), 2000);
   };
 
@@ -78,32 +97,32 @@ export default function App() {
       setShowLogin(false);
       setPassword("");
       Swal.fire({
-        icon: 'success',
-        title: 'Acceso exitoso',
+        icon: "success",
+        title: "Acceso exitoso",
         toast: true,
-        position: 'top',
+        position: "top",
         showConfirmButton: false,
-        timer: 1000
+        timer: 1000,
       });
     } catch (error) {
       Swal.fire({
-        icon: 'error',
-        title: 'PIN Incorrecto',
-        confirmButtonColor: '#3A3530'
+        icon: "error",
+        title: "PIN Incorrecto",
+        confirmButtonColor: "#3A3530",
       });
     }
   };
 
-  const openEditor = (item = {}) => {
-    setEditingItem(item);
-  };
+  const openEditor = (item = {}) => setEditingItem(item);
 
   const handleToggleStock = async (item) => {
     try {
       await API.toggleStock(item.id);
-      setItems(items.map(i => 
-        i.id === item.id ? { ...i, available: !i.available } : i
-      ));
+      setItems(
+        items.map((i) =>
+          i.id === item.id ? { ...i, available: !i.available } : i,
+        ),
+      );
     } catch (error) {
       console.error("Error al cambiar disponibilidad:", error);
     }
@@ -111,62 +130,58 @@ export default function App() {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    
     if (!editingItem.name || !editingItem.category || !editingItem.price) {
       Swal.fire({
-        icon: 'warning',
-        title: 'Por favor completa todos los campos',
-        confirmButtonColor: '#3A3530'
+        icon: "warning",
+        title: "Por favor completa todos los campos",
+        confirmButtonColor: "#3A3530",
       });
       return;
     }
-
     try {
       await API.saveItem(editingItem);
       setEditingItem(null);
       fetchItems();
       Swal.fire({
-        icon: 'success',
-        title: 'Producto guardado',
+        icon: "success",
+        title: "Producto guardado",
         toast: true,
-        position: 'top',
+        position: "top",
         showConfirmButton: false,
-        timer: 1500
+        timer: 1500,
       });
     } catch (error) {
-      console.error("Error al guardar:", error);
       Swal.fire({
-        icon: 'error',
-        title: 'Error al guardar',
+        icon: "error",
+        title: "Error al guardar",
         text: error.message,
-        confirmButtonColor: '#3A3530'
+        confirmButtonColor: "#3A3530",
       });
     }
   };
 
   const handleDelete = async (id) => {
     const result = await Swal.fire({
-      title: '¿Eliminar este producto?',
-      text: 'Esta acción no se puede deshacer',
-      icon: 'warning',
+      title: "¿Eliminar este producto?",
+      text: "Esta acción no se puede deshacer",
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: '#3A3530',
-      cancelButtonColor: '#A69984',
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
+      confirmButtonColor: "#3A3530",
+      cancelButtonColor: "#A69984",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
     });
-
     if (result.isConfirmed) {
       try {
         await API.deleteItem(id);
         fetchItems();
         Swal.fire({
-          icon: 'success',
-          title: 'Producto eliminado',
+          icon: "success",
+          title: "Producto eliminado",
           toast: true,
-          position: 'top',
+          position: "top",
           showConfirmButton: false,
-          timer: 1500
+          timer: 1500,
         });
       } catch (error) {
         console.error("Error al eliminar:", error);
@@ -174,7 +189,6 @@ export default function App() {
     }
   };
 
-  // Render
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8F6F0] to-[#EBE3D5]">
       <Header
@@ -186,22 +200,33 @@ export default function App() {
       />
 
       <div className="max-w-4xl mx-auto px-4 py-6">
+        {/* Filtros de Categorías */}
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-          {categories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`
-                px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all
-                ${activeCategory === cat
-                  ? 'bg-[#3A3530] text-white shadow-lg'
-                  : 'bg-white text-[#3A3530] hover:bg-[#F8F6F0] border border-[#EBE3D5]'
-                }
-              `}
-            >
-              {cat}
-            </button>
-          ))}
+          {categories.map((cat) => {
+            const isSpecialBtn = cat.toLowerCase() === "special";
+            const isActive = activeCategory === cat;
+
+            return (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`
+                  px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border
+                  ${
+                    isActive
+                      ? isSpecialBtn
+                        ? "bg-[#4A5D3F] text-white border-[#4A5D3F] shadow-lg scale-105"
+                        : "bg-[#3A3530] text-white border-[#3A3530] shadow-lg"
+                      : isSpecialBtn
+                        ? "bg-[#E0E8D9] text-[#4A5D3F] border-[#C5D1B9] hover:bg-[#D5DFC9]"
+                        : "bg-white text-[#3A3530] border-[#EBE3D5] hover:bg-[#F8F6F0]"
+                  }
+                `}
+              >
+                {cat}
+              </button>
+            );
+          })}
         </div>
 
         {isAdmin && (
@@ -227,7 +252,7 @@ export default function App() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {items.map(item => (
+            {items.map((item) => (
               <ProductCard
                 key={item.id}
                 product={item}

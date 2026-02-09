@@ -7,15 +7,16 @@ export const LOGO_CLICKS_TO_LOGIN = 3;
 
 // Categories
 export const CATEGORIES = {
-  ALL: 'Todos',
-  NOT_COFFEE: '(Not) Coffee',
-  COFFEE: 'Coffee',
-  CHOCOLATE: 'Chocolate',
-  DULCE: 'Dulce',
-  SALADO: 'Salado',
-  BOWLS: 'Bowls',
-  BRUNCH: 'Brunch',
-  SMASH_COOKIE: 'Smash Cookie',
+  ALL: "Todos",
+  SPECIALS: "Specials",
+  NOT_COFFEE: "(Not) Coffee",
+  COFFEE: "Coffee",
+  CHOCOLATE: "Chocolate",
+  DULCE: "Dulce",
+  SALADO: "Salado",
+  BOWLS: "Bowls",
+  BRUNCH: "Brunch",
+  SMASH_COOKIE: "Smash Cookie",
 };
 
 // Messages
