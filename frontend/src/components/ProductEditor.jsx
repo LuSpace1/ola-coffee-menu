@@ -143,6 +143,19 @@ export default function ProductEditor({ product, onSave, onClose, onChange }) {
             />
           </div>
 
+          <div>
+            <label className="block text-xs font-bold text-[#3A3530] mb-2 uppercase tracking-wider">
+              Descripción (Opcional)
+            </label>
+            <textarea
+              value={product.description || ''}
+              onChange={(e) => handleFieldChange('description', e.target.value)}
+              className="w-full p-3 border-2 border-[#EBE3D5] rounded-xl focus:outline-none focus:border-[#3A3530] transition-colors resize-none"
+              placeholder="Descripción breve del producto"
+              rows="3"
+            />
+          </div>
+
           {/* Botones Guardar/Cancelar */}
           <div className="flex gap-3 pt-4">
             <button
