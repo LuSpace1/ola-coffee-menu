@@ -211,6 +211,7 @@ export default function App() {
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
                 className={`
+                  relative
                   px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border
                   ${
                     isActive
@@ -222,8 +223,33 @@ export default function App() {
                         : "bg-white text-[#3A3530] border-[#EBE3D5] hover:bg-[#F8F6F0]"
                   }
                 `}
+                style={isActive && isSpecialBtn ? { clipPath: 'inset(0 round 9999px)' } : {}}
               >
-                {cat}
+                {/* Textura granulada solo para Special activo */}
+                {isActive && isSpecialBtn && (
+                  <div className="absolute inset-0 pointer-events-none z-0">
+                    <svg
+                      className="h-full w-full opacity-[0.4] mix-blend-soft-light"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <filter id="grainy-btn">
+                        <feTurbulence
+                          type="fractalNoise"
+                          baseFrequency="0.95"
+                          numOctaves="10"
+                          stitchTiles="stitch"
+                        />
+                        <feComponentTransfer>
+                          <feFuncR type="linear" slope="1.5" intercept="-0.2" />
+                          <feFuncG type="linear" slope="1.5" intercept="-0.2" />
+                          <feFuncB type="linear" slope="1.5" intercept="-0.2" />
+                        </feComponentTransfer>
+                      </filter>
+                      <rect width="100%" height="100%" filter="url(#grainy-btn)" />
+                    </svg>
+                  </div>
+                )}
+                <span className="relative z-10">{cat}</span>
               </button>
             );
           })}
