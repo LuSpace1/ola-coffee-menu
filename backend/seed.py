@@ -1,5 +1,8 @@
-from database import SessionLocal
+from database import SessionLocal, engine
 import models
+
+#Crear las tablas en la base de datos si aún no existen
+models.Base.metadata.create_all(bind=engine)
 
 #DATOS EXACTOS DE LA CARTA OLA COFFEE (PDF)
 MENU_ITEMS = [
@@ -139,10 +142,11 @@ def seed_db():
     for item in MENU_ITEMS:
         if "description" not in item:
             item["description"] = None
-
-        producto = models.Product(**item)
-        db.add(producto)
-        count += 1
+        existing = db.query(models.Product).filter(models.Product.name == item["name"]).first()
+        if not existing:
+            producto = models.Product(**item)
+            db.add(producto)
+            count += 1
     
     db.commit()
     print(f"Se cargaron {count} productos oficiales en la base de datos.")
