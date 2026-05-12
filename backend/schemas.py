@@ -20,3 +20,18 @@ class Product(ProductBase):
     class Config:
         # Esto permite que Pydantic lea datos directamente de los modelos de SQLAlchemy
         from_attributes = True
+
+# 4. Esquema para Login
+class LoginRequest(BaseModel):
+    password: str
+
+# 5. Esquema para Recuperación
+class RecoveryParams(BaseModel):
+    email: str
+
+class PinVerification(BaseModel):
+    pin: str
+    new_password: str
+
+class EmailUpdate(BaseModel):
+    new_email: str

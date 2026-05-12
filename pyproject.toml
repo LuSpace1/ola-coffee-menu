@@ -1,0 +1,13 @@
+[project]
+name = "ola-coffee-menu"
+version = "0.1.0"
+description = "Ola Coffee Menu project"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.uv.workspace]
+members = ["backend"]
+
+[tool.uv]
+package = false
