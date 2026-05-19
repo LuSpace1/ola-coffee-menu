@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Plus, Loader2, List } from "lucide-react";
+import { Plus, Loader2, List, Edit3, Settings } from "lucide-react";
 import Swal from "sweetalert2";
 import * as API from "./api";
 
@@ -189,6 +189,128 @@ export default function App() {
     }
   };
 
+  const handleRenameCategory = async (oldCategoryName) => {
+    const { value: newCategoryName } = await Swal.fire({
+      title: 'Renombrar Categoría',
+      input: 'text',
+      inputLabel: `Nuevo nombre para "${oldCategoryName}"`,
+      inputValue: oldCategoryName,
+      showCancelButton: true,
+      confirmButtonText: 'Guardar cambios',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#3A3530',
+      cancelButtonColor: '#A69984',
+      inputValidator: (value) => {
+        if (!value || value.trim() === '') {
+          return 'Debes ingresar un nombre válido'
+        }
+        if (value.trim() === oldCategoryName) {
+          return 'El nombre debe ser diferente al actual'
+        }
+      }
+    });
+
+    if (newCategoryName) {
+      try {
+        await API.renameCategory(oldCategoryName, newCategoryName.trim());
+
+        if (activeCategory === oldCategoryName) {
+          setActiveCategory(newCategoryName.trim());
+        }
+
+        fetchItems();
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Categoría renombrada',
+          toast: true,
+          position: 'top',
+          showConfirmButton: false,
+          timer: 1500
+        });
+      } catch (error) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al renombrar',
+          text: error.message || 'No se pudo cambiar el nombre de la categoría',
+          confirmButtonColor: '#3A3530'
+        });
+      }
+    }
+  };
+
+  const handleConfigureEmail = async () => {
+    const status = await API.checkHasEmail();
+    const currentEmail = status.hasEmail ? status.email : "No configurado";
+
+    const { value: email, isConfirmed } = await Swal.fire({
+      title: 'Correo de Recuperación',
+      html: `
+        <div id="email-display-container" class="flex items-center justify-between bg-[#F8F6F0] p-4 rounded-xl mb-4 text-left">
+           <div>
+             <span class="block text-xs text-[#A69984] font-bold uppercase tracking-wider">Correo Actual</span>
+             <span id="current-email-text" class="text-[#3A3530] font-black" style="word-break: break-all;">${currentEmail}</span>
+           </div>
+           <button type="button" id="edit-email-btn" class="p-2 bg-white rounded-lg shadow text-[#A69984] hover:text-[#3A3530] transition-colors" title="Editar Correo">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+           </button>
+        </div>
+        <div id="email-input-container" style="display: none;">
+          <input id="swal-input-email" class="swal2-input !mx-0 !w-full !mt-0 font-bold text-center" placeholder="Nuevo correo electrónico" type="email">
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: 'Guardar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#3A3530',
+      didOpen: () => {
+        const editBtn = document.getElementById('edit-email-btn');
+        const displayContainer = document.getElementById('email-display-container');
+        const inputContainer = document.getElementById('email-input-container');
+        const emailInput = document.getElementById('swal-input-email');
+
+        editBtn.addEventListener('click', () => {
+          displayContainer.style.display = 'none';
+          inputContainer.style.display = 'block';
+          emailInput.value = currentEmail !== "No configurado" ? currentEmail : '';
+          emailInput.focus();
+        });
+
+        if (currentEmail === "No configurado") {
+          displayContainer.style.display = 'none';
+          inputContainer.style.display = 'block';
+        }
+      },
+      preConfirm: () => {
+        const inputContainer = document.getElementById('email-input-container');
+        const emailInput = document.getElementById('swal-input-email');
+        if (inputContainer.style.display !== 'none') {
+          const val = emailInput.value.trim();
+          if (!val || !val.includes('@')) {
+            Swal.showValidationMessage('Ingresa un correo electrónico válido');
+            return false;
+          }
+          return val;
+        }
+        return null;
+      }
+    });
+
+    if (isConfirmed && email) {
+      try {
+        await API.updateRecoveryEmail(email);
+        Swal.fire({
+          icon: 'success',
+          title: 'Correo Configurado',
+          text: `Se usará \n${email}\n para recuperar tu acceso.`,
+          confirmButtonColor: '#3A3530'
+        });
+      } catch (error) {
+        Swal.fire({ icon: 'error', title: 'Error', text: error.message, confirmButtonColor: '#3A3530' });
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8F6F0] to-[#EBE3D5]">
       <Header
@@ -249,20 +371,43 @@ export default function App() {
                     </svg>
                   </div>
                 )}
-                <span className="relative z-10">{cat}</span>
+                <div className="relative z-10 flex items-center gap-2">
+                  <span>{cat}</span>
+                  {isAdmin && cat !== "Todos" && (
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRenameCategory(cat);
+                      }}
+                      className="p-1 hover:bg-black/10 rounded-full transition-colors cursor-pointer"
+                      title={`Renombrar categoría ${cat}`}
+                    >
+                      <Edit3 size={14} className={isActive ? 'text-white' : (isSpecialBtn ? 'text-[#4A5D3F]' : 'text-[#3A3530]')} />
+                    </div>
+                  )}
+                </div>
               </button>
             );
           })}
         </div>
 
         {isAdmin && (
-          <button
-            onClick={() => openEditor({})}
-            className="w-full mb-6 bg-gradient-to-r from-[#3A3530] to-[#2a2622] text-white p-4 rounded-2xl font-black shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
-          >
-            <Plus size={20} />
-            NUEVO PRODUCTO
-          </button>
+          <div className="flex gap-2 mb-6">
+            <button
+              onClick={() => openEditor({})}
+              className="flex-1 bg-gradient-to-r from-[#3A3530] to-[#2A2622] text-white p-4 rounded-2xl font-black shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+            >
+              <Plus size={20} />
+              NUEVO PRODUCTO
+            </button>
+            <button
+              onClick={handleConfigureEmail}
+              title="Configurar Correo de Recuperación"
+              className="bg-[#EBE3D5] text-[#3A3530] p-4 rounded-2xl font-black shadow hover:bg-[#D9C4B1] transition-all flex items-center justify-center"
+            >
+              <Settings size={20} />
+            </button>
+          </div>
         )}
 
         {loading ? (
